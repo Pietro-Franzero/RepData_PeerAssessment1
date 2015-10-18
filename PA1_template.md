@@ -1,23 +1,13 @@
----
-title: 'Reproducible Research: Peer Assessment 1'
-author: "Pietro Franzero"
-output:
-  html_document:
-    keep_md: yes
----
+# Reproducible Research: Peer Assessment 1
+Pietro Franzero  
   
-```{r, echo = FALSE}
-    library(knitr)
-    library(rmarkdown)
-    library(markdown)
-    library(ggplot2)
-    library(lattice)
-```
+
   
 Before we begin, let's set echo to TRUE in the options, just to make sure the
 code is easy to follow:
   
-```{r, echo = TRUE}
+
+```r
     opts_chunk$set(echo = TRUE, results = "markup")
 ```
   
@@ -26,26 +16,37 @@ code is easy to follow:
   
 First, we should load the data:
   
-```{r}
+
+```r
     unzip("activity.zip")
     data <- read.csv("activity.csv", header = TRUE)
 ```
   
 Now, we can have a look at the data structure:
   
-```{r}
+
+```r
     str(data)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
   
 We can see that the date variable is a factor. Let's convert it to Date type:
   
-```{r}
+
+```r
     data$date <- as.Date(data$date, format = "%Y-%m-%d")
 ```
   
 The interval variable is an integer. It will be easier to handle if we break it into 5-minute intervals (where 0'-5' is the 1st interval, 5'-10' is the 2nd interval and so on):
   
-```{r}
+
+```r
     data$five_min_int <- (data$interval %/% 100)*(60/5) + (data$interval %% 100)*(1/5) + 1
 ```
   
@@ -63,7 +64,8 @@ Now, we can move on to the questions.
     
 We can calculate the total number of steps per day using sapply and split (which is equivalent to tapply):
   
-```{r}
+
+```r
     total_steps <- sapply(split(data$steps, data$date), sum, na.rm = TRUE)
     total_steps <- as.data.frame(as.table(total_steps))
     colnames(total_steps) <- c("Date","Total")
@@ -76,10 +78,17 @@ We can calculate the total number of steps per day using sapply and split (which
   
 Now, let's make a histogram of total_steps to have an idea of the frequency distribution. I am using ggplot2, so I am going to load the package:
   
-```{r}
+
+```r
     library(ggplot2)
     qplot(x = Total, data = total_steps, geom = "histogram", main = "Histogram of total_steps")
 ```
+
+```
+## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
   
 Note that I am using the default bin widths.
   
@@ -90,12 +99,13 @@ Note that I am using the default bin widths.
   
 Now, we can calculate the mean and median of total_steps:
   
-```{r}
+
+```r
     steps_mean <- mean(total_steps$Total, na.rm = TRUE)
     steps_median <- median(total_steps$Total, na.rm = TRUE)
 ```
   
-So we can see the mean is `r steps_mean` and the median is `r steps_median`.
+So we can see the mean is 9354.2295082 and the median is 10395.
   
   
   
@@ -109,7 +119,8 @@ Now we have to calculate the average number of steps taken in each interval (x-a
   
 To do so, let's first calculate the series we want to plot:
   
-```{r}
+
+```r
     int_mean <- sapply(split(data$steps, data$five_min_int), mean, na.rm = TRUE)
     int_mean <- as.data.frame(as.table(int_mean))
     colnames(int_mean) <- c("Interval","Mean")
@@ -120,25 +131,29 @@ Note that, as we are going to plot a time series chart, the Interval variable mu
   
 Now we can make the plot:
   
-```{r}
+
+```r
     ggplot(int_mean, aes(Interval, Mean, group = 1)) +
       geom_point() +
       geom_line() +
       coord_cartesian(xlim = c(min(int_mean$Interval), max(int_mean$Interval))) +
       ggtitle("Average steps per interval across days")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
   
   
 ### Which interval is the maximum?
   
 **2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?**
   
-```{r}
+
+```r
   x <- int_mean$Interval[int_mean = max(int_mean$Mean)]
   y <- (((x-1) %/% 12)*100) + (((x-1) %% 12)*5)
 ```
   
-In this case, the interval with the maximum number of steps begins at `r y`.
+In this case, the interval with the maximum number of steps begins at 1705.
   
   
   
@@ -152,7 +167,8 @@ In this case, the interval with the maximum number of steps begins at `r y`.
   
 Let's calculate the total number of NAs in the steps and store results in a data frame df:
   
-```{r}
+
+```r
     df <- data.frame(NA_steps = sum(is.na(data$steps)),NA_date = sum(is.na(data$date)), NA_interval = sum(is.na(data$interval)), row.names = "Summary")
 ```
   
@@ -171,8 +187,8 @@ ii) for the remaining days, I will replace with the average of the 5' interval a
   
 To accomplish such, I am going to build a loop to look for the sum of steps in the day (using the "total_steps" data frame from part 1) and for the mean for the interval (using the "int_mean" data frame from part 2):
   
-```{r}
 
+```r
     new_data <- data
     
     total_steps$Date <- as.Date(total_steps$Date, format = "%Y-%m-%d")
@@ -192,7 +208,6 @@ To accomplish such, I am going to build a loop to look for the sum of steps in t
         }
       }  
     }
-    
 ```
   
   
@@ -202,21 +217,29 @@ To accomplish such, I am going to build a loop to look for the sum of steps in t
   
 Now, we can plot a histogram of the new data (new_total_steps):
   
-```{r}
+
+```r
     new_total_steps <- sapply(split(data$steps, data$date), sum, na.rm = TRUE)
     new_total_steps <- as.data.frame(as.table(new_total_steps))
     colnames(new_total_steps) <- c("Date","Total")
     qplot(x = Total, data = new_total_steps, geom = "histogram", main = "Histogram of new_total_steps")
 ```
+
+```
+## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png) 
   
 Calculating the new mean and median of new_total_steps:
   
-```{r}
+
+```r
     new_steps_mean <- mean(new_total_steps$Total, na.rm = TRUE)
     new_steps_median <- median(new_total_steps$Total, na.rm = TRUE)
 ```
   
-_We can see the mean is `r new_steps_mean` and the median is `r new_steps_median`. The fact that there was no change in the numbers indicate that all days with missing data were days in which the sum of steps had (previously) been 0._
+_We can see the mean is 9354.2295082 and the median is 10395. The fact that there was no change in the numbers indicate that all days with missing data were days in which the sum of steps had (previously) been 0._
   
   
   
@@ -226,17 +249,18 @@ _We can see the mean is `r new_steps_mean` and the median is `r new_steps_median
   
 First, let's add the factor weekdays to the (new) data set:
   
-```{r}
+
+```r
     new_data$weekdays <- factor(weekdays(new_data$date))
     levels(new_data$weekdays) <- list(weekday = c("Monday","Tuesday","Wednesday","Thursday","Friday"), weekend = c("Saturday","Sunday"))
-    
 ```
   
 **2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.**
   
 Now, we can calculate the new mean across each interval:
   
-```{r}
+
+```r
     new_int_mean <- aggregate(new_data$steps, 
                       list(Interval = new_data$five_min_int, 
                         Weekdays = new_data$weekdays),
@@ -247,8 +271,10 @@ Now, we can calculate the new mean across each interval:
   
 Finally, we can make the plot comparing average steps per interval across weekdays and weekends. This time, I am going to use lattice:
   
-```{r}
+
+```r
     library(lattice)
     xyplot(new_int_mean$Mean ~ new_int_mean$Interval | new_int_mean$Weekdays, layout = c(1,2), type = "l", xlab = "Interval", ylab = "Average number of steps")
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-19-1.png) 
